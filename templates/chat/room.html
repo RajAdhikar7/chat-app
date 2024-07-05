@@ -1,0 +1,180 @@
+<!-- chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ room.name }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            height: 80%;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        #messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+        }
+
+        .message.received {
+            align-items: flex-start;
+        }
+
+        .message-content {
+            background-color: #f1f0f0;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-content {
+            background-color: #dcf8c6;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        form {
+            display: flex;
+            padding: 10px 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        textarea {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            background-color: #f0f0f0;
+            resize: none;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ room.name }}</h1>
+        </div>
+        <div id="messages">
+            {% for message in messages %}
+                <div class="message {% if message.user == request.user %}sent{% else %}received{% endif %}">
+                    <div class="message-content">{{ message.content }}</div>
+                    <div class="message-time">{{ message.sent_at }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        <form id="chat-form">
+            {% csrf_token %}
+            <textarea id="message-input" rows="1" placeholder="Type your message..."></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const roomName = "{{ room.name }}";
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'received');
+            messageElement.innerHTML = `
+                <div class="message-content">${data.message}</div>
+                <div class="message-time">${data.timestamp}</div>
+            `;
+            document.querySelector('#messages').appendChild(messageElement);
+            document.querySelector('#messages').scrollTop = document.querySelector('#messages').scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-form').onsubmit = function(e) {
+            e.preventDefault();
+            const messageInputDom = document.querySelector('#message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'timestamp': new Date().toLocaleString()
+            }));
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'sent');
+            messageElement.innerHTML = `
+                <div class="message-content">${message}</div>
+                <div class="message-time">${new Date().toLocaleString()}</div>
+            `;
+            document.querySelector('#messages').appendChild(messageElement);
+            document.querySelector('#messages').scrollTop = document.querySelector('#messages').scrollHeight;
+            messageInputDom.value = '';
+        };
+    </script>
+</body>
+</html>
