@@ -1,4 +1,4 @@
-<!-- chat/room.html -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -112,7 +112,7 @@
 
         button:hover {
             background-color: #45a049;
-        }
+        } 
     </style>
 </head>
 <body>
@@ -125,6 +125,7 @@
                 <div class="message {% if message.user == request.user %}sent{% else %}received{% endif %}">
                     <div class="message-content">{{ message.content }}</div>
                     <div class="message-time">{{ message.sent_at }}</div>
+                    <div class="message-username">{{ message.user.username }}</div>
                 </div>
             {% endfor %}
         </div>
@@ -138,7 +139,7 @@
     <script>
         const roomName = "{{ room.name }}";
         const chatSocket = new WebSocket(
-            'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+            (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/chat/' + roomName + '/'
         );
 
         chatSocket.onmessage = function(e) {
@@ -153,7 +154,6 @@
             document.querySelector('#messages').appendChild(messageElement);
             document.querySelector('#messages').scrollTop = document.querySelector('#messages').scrollHeight;
         };
-        
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');

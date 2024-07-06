@@ -1,8 +1,8 @@
-
+# consumers.py
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Message, Room, User
+from .models import Message, Room
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -10,7 +10,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f'chat_{self.room_name}'
 
         if self.scope['user'].is_authenticated:
-             # Join room group
+            # Join room group
             await self.channel_layer.group_add(
                 self.room_group_name,
                 self.channel_name
@@ -26,7 +26,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-    # Recieve Message from websocket 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
@@ -34,8 +33,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room_name = self.room_name
 
         if user.is_authenticated:
-
-            # save message to the database.
+            # Save message to the database.
             await self.save_message(user, room_name, message)
 
             # Send message to room group
@@ -54,12 +52,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room = Room.objects.get(name=room_name)
         Message.objects.create(user=user, room=room, content=message)
 
-    # Receive message from room group
     async def chat_message(self, event):
         message = event['message']
         username = event['username']
         timestamp = event['timestamp']
-    # Send message to WebSocket
+
+        # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message,
             'username': username,

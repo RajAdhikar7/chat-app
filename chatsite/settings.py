@@ -51,6 +51,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTH_USER_MODEL = 'chat.User'
+
 ROOT_URLCONF = 'chatsite.urls'
 
 TEMPLATES = [
