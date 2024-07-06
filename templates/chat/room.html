@@ -148,10 +148,12 @@
             messageElement.innerHTML = `
                 <div class="message-content">${data.message}</div>
                 <div class="message-time">${data.timestamp}</div>
+                <div class="message-username">${data.username}</div>
             `;
             document.querySelector('#messages').appendChild(messageElement);
             document.querySelector('#messages').scrollTop = document.querySelector('#messages').scrollHeight;
         };
+        
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
